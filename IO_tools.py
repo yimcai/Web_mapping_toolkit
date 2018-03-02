@@ -19,14 +19,17 @@ def read_geodata(geodata):
         raise
     else:
         return gdf
+#define projection 
+def define_proj(gdf, proj_name):
+    gdf.crs = proj_name
+
 #project GeoDataFrame to WGS84 for mapping purpose  
 def proj_to_wgs84(gdf):
     crs = {"init":"epsg:4326"}
     gdf = gdf.to_crs(crs)
     return gdf
-#convert geodataframe to geojson
-def to_geojson(gdf):
-    return gdf.to_json()
+#SF proj {"init":"epsg:102643"} 
+
 
 #create an folium map object 
 class Web_map(object):
@@ -49,10 +52,17 @@ class Web_map(object):
         marker = folium.Marker(location, popup = pop_up)
         marker.add_to(self.Map)
 
-    #add geometry to self.Map
-    def add_geometry(self, geojson_data, layer_name, pop_up = None): 
-        self.Map.add_child(folium.GeoJson(geojson_data, 
-                        name = layer_name).add_child(folium.Popup("Street A & Ave B")))
+    #add geometry and popups 
+    #option 1
+    # def add_geometry(self, geojson_data, layer_name, pop_up = None): 
+    #     self.Map.add_child(folium.GeoJson(geojson_data, 
+    #                     name = layer_name).add_child(folium.Popup(pop_up)))
+    #option 2 
+    def add_geometry(self, geojson_data, layer_name, pop_up =None):
+        geojson = folium.GeoJson(geojson_data, name= layer_name)
+        popup_obj =  folium.Popup(pop_up)
+        popup_obj.add_to(geojson)
+        geojson.add_to(self.Map)
 
     #add interesting popup
     def add_popup(self, ):
@@ -63,32 +73,46 @@ class Web_map(object):
         folium.LayerControl().add_to(self.Map)
 
 def main():
-    #set parameters  
+    #set directory and file name
+    #initialization  
     sf_lat, sf_lng = 37.76, -122.44  
     zoom_start  = 13      
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    map_folder = "temp_maps"
+    map_folder = "docs"
     output_dir = os.path.join(base_dir, map_folder)
     if not os.path.isdir(output_dir): 
         os.mkdir(output_dir)
-    map_name = "sf_downtown.html"
+    map_name = "turn_restriction.html"
 
-    #create a map instance
+    #create a Web_map instance
     first_map = Web_map("SF", sf_lat, sf_lng, zoom_start)
     #add marker 
-    van_ness = [37.775, -122.419]
-    first_map.add_marker( van_ness, pop_up = "Van Ness Station")
+    van_ness = [37.775, -122.418]
+    first_map.add_marker( van_ness, pop_up = "SFCTA")
 
     #add geometry stored in geojson 
-    json_path = os.path.join(base_dir, "data_warehouse/Street_Centerlines/StreetCenterlines.geojson")
-    gdf_short = gpd.read_file(json_path).sample(frac = 0.005)
-    first_map.add_geometry(gdf_short.to_json(), "SF_Street" )
+    # json_path = os.path.join(base_dir, "data_warehouse\Street_Centerlines\StreetCenterlines.geojson")
+    # gdf_short = gpd.read_file(json_path).sample(frac = 0.005)
+
+    #read shapefile into geodataframe
+    # path style varies across platforms
+    shp_path = os.path.join(base_dir, "data_warehouse\\turn_am.shp")
+    gdf = read_geodata(shp_path)
+    #project gdf to wgs84
+    gdf_84 = proj_to_wgs84(gdf) 
+    #randomly sample a fraction of the geodataframe
+    gdf_short = gdf_84.sample(frac = 1)
+    #loop through gdf_short to access the "Comments", which would be used as popup info
+    for i in range(gdf_short.shape[0]):
+        gdf_i = gdf_short[i:i+1] 
+        comment = gdf_i.iloc[0]["Comments"]
+        #adding geojson to existing layer fails
+        first_map.add_geometry(gdf_i.to_json(), "SF_Street" , pop_up = comment)
 
     #add layer control 
     first_map.add_layer_control()
     # write into html       
     first_map.save_map(output_dir, map_name)   
-    print (json_path)
 
 if __name__ == "__main__":
     sys.exit(main())
