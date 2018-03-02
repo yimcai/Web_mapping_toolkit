@@ -19,6 +19,14 @@ def read_shapefile(network_file):
         raise
     else:
         return network_gdf
+#project GeoDataFrame to WGS84 for mapping purpose  
+def proj_to_wgs84(gdf):
+    crs = {"init":"epsg:4326"}
+    gdf = gdf.to_crs(crs)
+    return gdf
+#convert geodataframe to geojson
+def to_geojson(gdf):
+    return gdf.to_json()
 
 #create an folium map object 
 class Web_map(object):
@@ -30,22 +38,22 @@ class Web_map(object):
         self.map_name = map_name
         self.Map = folium.Map(location = [lat, lng], zoom_start = zoom_start)
 
+    #write folium Map object out to html file
     def save_map(self, output_dir, map_name):
         output_path = os.path.join(output_dir, map_name)
         self.Map.save(output_path)
 
-    def add_marker(self, ):
+    #add marker
+    def add_marker(self, location, pop_up = None,):
+        marker = folium.Marker(location, popup = pop_up)
+        marker.add_to(self.Map)
+
+    #add geometry to self.Map
+    def add_geometry(self, geojson_data): 
+        folium.GeoJson(geojson_data).add_to(self.Map)
+    #add interesting popup
+    def add_popup(self, ):
         pass
-
-    def add_geometry(self,): 
-        pass
-
-    def add_popup(self, ): 
-
-
-
-
-
 
 def main():
     #set parameters  
@@ -57,9 +65,10 @@ def main():
     map_name = "sf_downtown.html"
     #create a map instance
     first_map = Web_map("SF", sf_lat, sf_lng, zoom_start)
-    first_map.save_map(output_dir, map_name)
-
-
-    # first_map.save_map()          
+    #add marker 
+    van_ness = [37.775, -122.419]
+    first_map.add_marker( van_ness, pop_up = "a marker")
+    # first_map.save_map()       
+    first_map.save_map(output_dir, map_name)   
 if __name__ == "__main__":
     sys.exit(main())
