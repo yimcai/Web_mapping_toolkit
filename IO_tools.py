@@ -1,4 +1,5 @@
 import os
+import random
 import sys 
 
 import folium
@@ -30,6 +31,22 @@ def proj_to_wgs84(gdf):
     return gdf
 #SF proj {"init":"epsg:102643"} 
 
+#generate random 
+def hex_code_colors():
+    a = hex(random.randrange(0, 256))
+    b = hex(random.randrange(0, 256))
+    c = hex(random.randrange(0, 256))
+    a = a[2:]
+    b = b[2:]
+    c = c[2:]
+    if len(a) < 2:
+        a = "0" + a
+    if len(b) < 2:
+        b = "0" + b
+    if len(c) < 2:
+        c = "0" + c
+    z = a+ b + c
+    return "#" + z.upper()
 
 #create an folium map object 
 class Web_map(object):
@@ -58,8 +75,20 @@ class Web_map(object):
     #     self.Map.add_child(folium.GeoJson(geojson_data, 
     #                     name = layer_name).add_child(folium.Popup(pop_up)))
     #option 2 
+    def highlight_function(self, feature):
+        return {
+                "color" : "blue" ,
+                "weight" : 4
+        }
+
     def add_geometry(self, geojson_data, layer_name, pop_up =None):
-        geojson = folium.GeoJson(geojson_data, name= layer_name)
+        geojson = folium.GeoJson(geojson_data,
+                                    style_function = lambda feature:{
+                                        "color": hex_code_colors() , 
+                                        "weight" : 2,
+                                    },
+                                    highlight_function = self.highlight_function, 
+                                    name= layer_name)
         popup_obj =  folium.Popup(pop_up)
         popup_obj.add_to(geojson)
         geojson.add_to(self.Map)
