@@ -63,7 +63,7 @@ class Web_map(object):
         folium.LayerControl().add_to(self.Map)
 
 def main():
-    #set parameters  
+    #set initial parameters  
     sf_lat, sf_lng = 37.76, -122.44  
     zoom_start  = 13      
     base_dir = os.path.dirname(os.path.abspath(__file__))
