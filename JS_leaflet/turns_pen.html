@@ -23,6 +23,9 @@
    integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
    crossorigin=""></script>
    <script src="geojson/no_turn.geojson" type="text/javascript"></script>
+   <!-- <script src="https://raw.githubusercontent.com/yimcai/Web_mapping_toolkit/master/JS_leaflet/geojson/no_turn.geojson"></script> -->
+   <script src="http://s3-us-west-1.amazonaws.com/palewire/leaflet-hover/citycouncil.geojson"></script>
+
 
 </head>
 <body>
@@ -35,14 +38,14 @@
     	maxZoom: 16,
     	accessToken: 'pk.eyJ1IjoieWltY2FpOTIiLCJhIjoiY2plYWt5Z3Q2MDFyNDJxbzJhYWszYWNpcyJ9.PBOwWRoTa7GETNouo6P-rA'
 	});
-	dark.addTo(mymap);
+	mymap.addLayer(dark);
 
 	var light = L.tileLayer('https://api.mapbox.com/styles/v1/yimcai92/cjecznj1da8sq2rp49yvarlj1/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
     	attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
     	maxZoom: 16,
     	accessToken: 'pk.eyJ1IjoieWltY2FpOTIiLCJhIjoiY2plYWt5Z3Q2MDFyNDJxbzJhYWszYWNpcyJ9.PBOwWRoTa7GETNouo6P-rA'
 	});
-
+	mymap.addLayer(light)
 	// add marker
 	var twitter = L.marker([37.776522, -122.416858]);
 	var civic_center = L.marker([37.777912, -122.417750])
@@ -69,6 +72,9 @@
 //         .openOn(mymap);
 // }
 // mymap.on('click', onMapClick);
+	// var random_color = function{
+		
+	// }
 
 	// layer group 
 	var landmarks = L.layerGroup([civic_center, twitter])
@@ -83,10 +89,15 @@
 		layer.setStyle(street_style);
 	}
 	// add geojson 
-	var streets = L.geoJson(no_turns,
-							{
+	var streets = L.geoJson(no_turns,{
 								onEachFeature: onEachFeature
 							});
+
+    var bounds = L.geoJson(boundaries, {
+            // And link up the function to run when loading each feature
+        onEachFeature: onEachFeature
+        });
+
 	var baseMaps = {
     	"Mapbox-Dark": dark,
     	"Mapbox-light": light,
@@ -95,10 +106,12 @@
 	var overlayMaps = {
     	"Buildings": landmarks,
     	"Public Realm" : public_realm_area,
-    	"Streets": streets ,
+    	// "Streets": streets ,
+    	"Bounds": bounds
 
 	};
 
+    // L.control.layers(baseMaps, overlayMaps).addTo(mymap);
     L.control.layers(baseMaps, overlayMaps).addTo(mymap);
 
 	</script>
