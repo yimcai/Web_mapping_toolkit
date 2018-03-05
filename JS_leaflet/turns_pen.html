@@ -23,8 +23,9 @@
    integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
    crossorigin=""></script>
    <script src="geojson/no_turn.geojson" type="text/javascript"></script>
-   <!-- <script src="https://raw.githubusercontent.com/yimcai/Web_mapping_toolkit/master/JS_leaflet/geojson/no_turn.geojson"></script> -->
-   <script src="http://s3-us-west-1.amazonaws.com/palewire/leaflet-hover/citycouncil.geojson"></script>
+   <script src="https://yimcai.github.io/Web_mapping_toolkit/no_turn.geojson"></script>
+   <!-- add jQuery -->
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
 
 
 </head>
@@ -35,17 +36,17 @@
 
 	var dark = L.tileLayer('https://api.mapbox.com/styles/v1/yimcai92/cjeal4ce31b2q2sp6kig2ahnj/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
     	attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-    	maxZoom: 16,
+    	maxZoom: 18,
     	accessToken: 'pk.eyJ1IjoieWltY2FpOTIiLCJhIjoiY2plYWt5Z3Q2MDFyNDJxbzJhYWszYWNpcyJ9.PBOwWRoTa7GETNouo6P-rA'
 	});
-	mymap.addLayer(dark);
 
 	var light = L.tileLayer('https://api.mapbox.com/styles/v1/yimcai92/cjecznj1da8sq2rp49yvarlj1/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
     	attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
-    	maxZoom: 16,
+    	maxZoom: 18,
     	accessToken: 'pk.eyJ1IjoieWltY2FpOTIiLCJhIjoiY2plYWt5Z3Q2MDFyNDJxbzJhYWszYWNpcyJ9.PBOwWRoTa7GETNouo6P-rA'
 	});
-	mymap.addLayer(light)
+	//default base map is dark 
+	mymap.addLayer(dark)
 	// add marker
 	var twitter = L.marker([37.776522, -122.416858]);
 	var civic_center = L.marker([37.777912, -122.417750])
@@ -72,32 +73,46 @@
 //         .openOn(mymap);
 // }
 // mymap.on('click', onMapClick);
-	// var random_color = function{
-		
-	// }
+	function get_random_color() {
+  		function c() {
+    		var hex = Math.floor(Math.random()*256).toString(16);
+    		return ("0"+String(hex)).substr(-2); // pad with zero
+  			}
+  		return "#"+c()+c()+c();
+}
 
 	// layer group 
 	var landmarks = L.layerGroup([civic_center, twitter])
 	var public_realm_area = L.layerGroup([public_realm])
 	// add street style 
 	var street_style = {
-		"color": "#ff7800", 
-		"weight": 1.5, 
-		"opacity": 0.6
+		"color": "#e5f5f9",//get_random_color(), 
+		"weight": 2, 
+		"opacity": 0.8
 	};
-	var onEachFeature = function(feature, layer){
+	var highlight_style ={
+		"color": '#2262CC', 
+    	"weight": 6,
+    	"opacity": 0.6,
+	};
+	var onEachFeature_name_doesnot_matter = function(feature, layer){
 		layer.setStyle(street_style);
-	}
+		layer.bindPopup(feature.properties.Comments);
+		(function(layer, properties){
+			layer.on("mouseover", function(e){
+				layer.setStyle(highlight_style);
+			});
+			layer.on("mouseout", function(e){
+				layer.setStyle(street_style);
+			});
+		})(layer, feature.properties);
+	};
+	
 	// add geojson 
-	var streets = L.geoJson(no_turns,{
-								onEachFeature: onEachFeature
+	var turn_restrictions = L.geoJson(no_turns,{
+								onEachFeature: onEachFeature_name_doesnot_matter
 							});
-
-    var bounds = L.geoJson(boundaries, {
-            // And link up the function to run when loading each feature
-        onEachFeature: onEachFeature
-        });
-
+	turn_restrictions.addTo(mymap)
 	var baseMaps = {
     	"Mapbox-Dark": dark,
     	"Mapbox-light": light,
@@ -106,12 +121,11 @@
 	var overlayMaps = {
     	"Buildings": landmarks,
     	"Public Realm" : public_realm_area,
+    	"<span style= 'color: red'>No Turns</span>": turn_restrictions,
     	// "Streets": streets ,
-    	"Bounds": bounds
 
 	};
 
-    // L.control.layers(baseMaps, overlayMaps).addTo(mymap);
     L.control.layers(baseMaps, overlayMaps).addTo(mymap);
 
 	</script>
