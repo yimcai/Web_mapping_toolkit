@@ -118,22 +118,46 @@
 	var onEachFeature_name_doesnot_matter = function(feature, layer){
 		// new_style = new_street_style();
 		// street_color = new_style.color;
+		// this.layer = layer;
+		// var current_layer
 		street_color = street_style.color;
 		layer.setStyle(street_style);
 		// polyline decorator 
-		L.polylineDecorator(layer, {
+		line_decorator = L.polylineDecorator(layer, {
 			patterns: [
-            {offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 5, polygon: false, pathOptions: {stroke: true, color:street_color}})}
+            {offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:street_color}})}
         ]
-    }).addTo(turn_and_arrow);
+    });
+		//add to layer
+		line_decorator.addTo(turn_and_arrow);
 
+		//try using geoJSON.adddata
+		console.log(line_decorator);
 		layer.bindPopup(feature.properties.Comments);
 		(function(layer, properties){
 			layer.on("mouseover", function(e){
+			
 				layer.setStyle(highlight_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"red"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(mymap);
+
 			});
 			layer.on("mouseout", function(e){
 				layer.setStyle(street_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#edf8b1"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(mymap);
 			});
 		})(layer, feature.properties);
 	};
@@ -153,7 +177,6 @@
 							});
 	//add layer to map
 	// turn_restrictions.addTo(mymap)
-	// turn_and_arrow.addTo(mymap)
 
 	var baseMaps = {
     	"Mapbox-Dark": dark,
