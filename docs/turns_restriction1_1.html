@@ -97,7 +97,7 @@
 	};
 	var highlight_style = {
 		"color": "#2c7fb8",  
-		"weight": 8, 
+		"weight": 6, 
 		"opacity": 0.8
 	};
 
@@ -141,11 +141,11 @@
 				//generate line decorator again
 				line_decorator = L.polylineDecorator(layer, {
 					patterns: [
-            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"red"}})}
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#f03b20"}})}
         					]
     				});
 				//add highlight to decorator 
-				line_decorator.addTo(mymap);
+				line_decorator.addTo(turn_and_arrow);
 
 			});
 			layer.on("mouseout", function(e){
@@ -157,7 +157,7 @@
         					]
     				});
 				//add highlight to decorator 
-				line_decorator.addTo(mymap);
+				line_decorator.addTo(turn_and_arrow);
 			});
 		})(layer, feature.properties);
 	};
