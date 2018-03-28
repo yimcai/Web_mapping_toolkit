@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Turn Restrictions Map</title>
+	 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.1/dist/leaflet.css"
+   integrity="sha512-Rksm5RenBEKSKFjgI3a41vrjkw4EVPlJ3+OiI65vTjIdo9brlAacEuKOiQ5OFh7cOI1bkDwLqdLw3Zg0cRJAAQ=="
+   crossorigin=""/>
+   <style>
+   	body {
+   		margin:0;
+   		padding: 0;
+   	}
+   	#mapid{
+   		position: absolute;
+   		top:0;
+   		bottom:	0;
+   		width: 100%;
+   		margin: auto;
+   	}
+   </style>
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+ 	<script src="https://unpkg.com/leaflet@1.3.1/dist/leaflet.js"
+   integrity="sha512-/Nsx9X4HebavoBvEBuyp3I7od5tA0UzAxs+j83KgC8PU0kgB4XiK4Lfe4y4cgBtaRJQEIFCW+oC506aPT2L1zw=="
+   crossorigin=""></script>
+   <!-- <script src="https://yimcai.github.io/Web_mapping_toolkit/turn_am.geojson"></script> -->
+   <!-- <script src="turn_am.geojson"></script> -->
+   <script src="https://yimcai.github.io/Web_mapping_toolkit/turn_am.geojson"></script>
+   <script src="https://yimcai.github.io/Web_mapping_toolkit/turn_pm.geojson"></script>
+   <!-- <script src="/Users/yimingcai/Documents/SFCTA_internship/generate_turns_maps/Debug2/PM.geojson"></script> -->
+   <script src="https://yimcai.github.io/Web_mapping_toolkit/turn_op.geojson"></script>
+   <!-- add jQuery -->
+   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+   <!-- polyline decorator -->
+   <script src="https://yimcai.github.io/Web_mapping_toolkit/leaflet.polylineDecorator.js"  type="text/javascript"></script>  
+
+</head>
+<body>
+	<div id="mapid"></div>
+	<script>
+	var mymap = L.map('mapid').setView([37.763750, -122.447236], 13);
+
+	var dark = L.tileLayer('https://api.mapbox.com/styles/v1/yimcai92/cjeal4ce31b2q2sp6kig2ahnj/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
+    	attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+    	maxZoom: 18,
+    	accessToken: 'pk.eyJ1IjoieWltY2FpOTIiLCJhIjoiY2plYWt5Z3Q2MDFyNDJxbzJhYWszYWNpcyJ9.PBOwWRoTa7GETNouo6P-rA'
+	});
+
+	var light = L.tileLayer('https://api.mapbox.com/styles/v1/yimcai92/cjecznj1da8sq2rp49yvarlj1/tiles/256/{z}/{x}/{y}?access_token={accessToken}', {
+    	attribution: 'Imagery © <a href="http://mapbox.com">Mapbox</a>',
+    	maxZoom: 18,
+    	accessToken: 'pk.eyJ1IjoieWltY2FpOTIiLCJhIjoiY2plYWt5Z3Q2MDFyNDJxbzJhYWszYWNpcyJ9.PBOwWRoTa7GETNouo6P-rA'
+	});
+	//default base map is dark 
+	mymap.addLayer(dark)
+	// add marker
+	var twitter = L.marker([37.776522, -122.416858]);
+	var civic_center = L.marker([37.777912, -122.417750])
+	var public_realm = L.polygon([[37.777703, -122.416181], 
+								[37.777260, -122.419699] , 
+								[37.775189, -122.419324]],{
+									color: "yellow",
+									fillColor: "red",
+									fillOpacity: 0.2
+								});
+	//bind popup
+	public_realm.bindPopup("<b>Public Realm</b><br>Plan is being implemented");//.openPopup()
+	twitter.bindPopup("Twitter");
+	civic_center.bindPopup("Civic Center");
+
+	//function 
+
+// click event 
+// var popup = L.popup();
+// function onMapClick(e) {
+//     popup
+//         .setLatLng(e.latlng)
+//         .setContent("You clicked the map at " + e.latlng.toString())
+//         .openOn(mymap);
+// }
+// mymap.on('click', onMapClick);
+	function get_random_color() {
+  		function c() {
+    		var hex = Math.floor(Math.random()*256).toString(16);
+    		return ("0"+String(hex)).substr(-2); // pad with zero
+  			}
+  		return "#"+c()+c()+c();
+};
+
+	// layer group 
+	var landmarks = L.layerGroup([civic_center, twitter]);
+	
+	var public_realm_area = L.layerGroup([public_realm]);
+	var Turn_am_layer = L.layerGroup();
+	var Turn_pm_layer = L.layerGroup();
+	var Turn_op_layer = L.layerGroup();
+	// try add layer to layer group (it works)
+	// landmarks.addLayer(public_realm)
+
+	// add street style 
+	var street_style = {
+		"color": "#edf8b1",
+		"weight": 2, 
+		"opacity": 0.8
+	};
+	var highlight_style = {
+		"color": "#2c7fb8",  
+		"weight": 6, 
+		"opacity": 0.8
+	};
+
+	// function new_street_style() { 
+	// 	return {
+	// 	"color": get_random_color(), 
+	// 	"weight": 2, 
+	// 	"opacity": 0.8
+	// 	};
+	// };
+
+	// function highlight_style(street_color){	
+	// 	return {
+	// 	"color": street_color, 
+ //    	"weight": 8,
+ //    	"opacity": 0.6}
+// };
+	var onEachFeature_am = function(feature, layer){
+		// new_style = new_street_style();
+		// street_color = new_style.color;
+		// this.layer = layer;
+		// var current_layer
+		street_color = street_style.color;
+		layer.setStyle(street_style);
+		// polyline decorator 
+		line_decorator = L.polylineDecorator(layer, {
+			patterns: [
+            {offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:street_color}})}
+        ]
+    });
+		//add to layer
+		line_decorator.addTo(Turn_am_layer);
+
+		//try using geoJSON.adddata
+		console.log(feature);
+		layer.bindPopup(feature.properties.Intersect);
+		(function(layer, properties){
+			layer.on("mouseover", function(e){
+			
+				layer.setStyle(highlight_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#f03b20"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(Turn_am_layer);
+
+			});
+			layer.on("mouseout", function(e){
+				layer.setStyle(street_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#edf8b1"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(Turn_am_layer);
+			});
+		})(layer, feature.properties);
+	};
+	Turn_am_layer.addTo(mymap);
+
+//
+	var onEachFeature_pm = function(feature, layer){
+		// new_style = new_street_style();
+		// street_color = new_style.color;
+		// this.layer = layer;
+		// var current_layer
+		street_color = street_style.color;
+		layer.setStyle(street_style);
+		// polyline decorator 
+		line_decorator = L.polylineDecorator(layer, {
+			patterns: [
+            {offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:street_color}})}
+        ]
+    });
+		//add to layer
+		line_decorator.addTo(Turn_pm_layer);
+
+		//try using geoJSON.adddata
+		console.log(feature);
+		layer.bindPopup(feature.properties.Intersect);
+		(function(layer, properties){
+			layer.on("mouseover", function(e){
+			
+				layer.setStyle(highlight_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#f03b20"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(Turn_pm_layer);
+
+			});
+			layer.on("mouseout", function(e){
+				layer.setStyle(street_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#edf8b1"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(Turn_pm_layer);
+			});
+		})(layer, feature.properties);
+	};
+
+	var onEachFeature_op = function(feature, layer){
+		// new_style = new_street_style();
+		// street_color = new_style.color;
+		// this.layer = layer;
+		// var current_layer
+		street_color = street_style.color;
+		layer.setStyle(street_style);
+		// polyline decorator 
+		line_decorator = L.polylineDecorator(layer, {
+			patterns: [
+            {offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:street_color}})}
+        ]
+    });
+		//add to layer
+		line_decorator.addTo(Turn_op_layer);
+
+		//try using geoJSON.adddata
+		console.log(feature);
+		layer.bindPopup(feature.properties.Intersect);
+		(function(layer, properties){
+			layer.on("mouseover", function(e){
+			
+				layer.setStyle(highlight_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#f03b20"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(Turn_op_layer);
+
+			});
+			layer.on("mouseout", function(e){
+				layer.setStyle(street_style);
+				//generate line decorator again
+				line_decorator = L.polylineDecorator(layer, {
+					patterns: [
+            			{offset: '99.9%', endoffset : '0%' , repeat: '0%', symbol: L.Symbol.arrowHead({pixelSize: 8, polygon: false, pathOptions: {stroke: true, color:"#edf8b1"}})}
+        					]
+    				});
+				//add highlight to decorator 
+				line_decorator.addTo(Turn_op_layer);
+			});
+		})(layer, feature.properties);
+	};
+	// Turn_pm_layer.addTo(mymap);
+	//add a simple arrow line
+	// var arrow = L.polyline([[37.730520, -122.465209], [37.774808, -122.414989]]).setStyle(street_style).addTo(mymap);
+	// var arrowHead = L.polylineDecorator(arrow, {
+ //        patterns: [
+ //            { offset: '5%', repeat: '10%', symbol: L.Symbol.arrowHead({pixelSize: 10, polygon: false, pathOptions: {stroke: true, color: get_random_color()}})}
+ //        ]
+ //    }).addTo(mymap);
+
+	// add am geojson object to geoJson Layer
+	var turn_restrictions_am = L.geoJSON(turn_am , {
+								onEachFeature: onEachFeature_am,
+								// addtional on feature 
+							});
+	// add pm geojson object to geojson layer
+	var turn_restrictions_pm = L.geoJSON(turn_pm , {
+								onEachFeature: onEachFeature_pm,
+								// addtional on feature 
+							});	
+	var turn_restrictions_op = L.geoJSON(turn_op , {
+								onEachFeature: onEachFeature_op,
+								// addtional on feature 
+							});	
+	//add layer to map
+	// turn_restrictions.addTo(mymap)
+
+	var baseMaps = {
+    	"Mapbox-Dark": dark,
+    	"Mapbox-light": light,
+	};
+
+	// add turn restrictions to turn_am layer group
+	Turn_am_layer.addLayer(turn_restrictions_am);
+	Turn_pm_layer.addLayer(turn_restrictions_pm);
+	Turn_op_layer.addLayer(turn_restrictions_op);
+
+	var overlayMaps = { 
+    	// "Buildings": landmarks,
+    	// "Public Realm" : public_realm_area,
+    	"<span style= 'color: red'>AM Turn Restrictions</span>": Turn_am_layer,
+    	"<span style= 'color: purple'>PM Turn Restrictions</span>": Turn_pm_layer,
+    	"<span style= 'color: blue'>OP Turn Restrictions</span>": Turn_op_layer,
+    	// "No Turns" : turn_and_arrow
+    	// "Streets": streets ,
+
+	};
+
+    L.control.layers(baseMaps, overlayMaps).addTo(mymap);
+
+	</script>
+
+</body>
+
+</html>
